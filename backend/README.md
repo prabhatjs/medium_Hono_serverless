@@ -22,3 +22,15 @@ DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsI
 in prisma accelerate paste your database connection string i am using neon db ..
 Database Connection string---
 postgresql://myblogdb_owner:*****************@e-star-tgkbwu.us-east-2.aws.neon.tech/myblogdb?sslmode=require
+
+```
+using hono 
+    with neon db
+    prisma client
+    hono/jwt
+    
+
+    ----------------------------------validation----------------------
+    using zod for type shefty
+    check user is exist or not is user is exists show mesg
+    
