@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { verify } from 'hono/jwt';
+import { auth } from 'hono/utils/basic-auth';
 
 
 export const blogRouter = new Hono<{
@@ -119,6 +120,63 @@ blogRouter.get('/:id', async (c) => {
      return c.json({ message: 'Error while fetching blog posts' });
   }
 });
+
+blogRouter.delete('/:id', async (c) => {
+  const id = c.req.param('id'); // Get the ID from the URL params
+  console.log('ID to delete:', id);
+
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  const authorId = c.get("userId");  // Get the user ID from the request context (set in the middleware)
+  console.log('Author ID from JWT:', authorId);
+
+  // Check if the blog exists and retrieve the author ID
+  const blogCheck = await prisma.post.findUnique({
+    where: {
+      id: Number(id), // Assuming the 'id' is a string (UUID)
+    },
+    select: { authorid: true },
+  });
+
+  console.log('Blog check result:', blogCheck);
+
+  // If the blog does not exist
+  if (!blogCheck) {
+    c.status(404);
+    return c.json({
+      message: 'Blog post not found',
+    });
+  }
+
+  // If the author of the post is not the logged-in user
+  if (blogCheck.authorid !== Number(authorId)) {
+    c.status(403);
+    return c.json({
+      error: 'Unauthorized: You can only delete your own posts',
+    });
+  }
+
+  try {
+    // Proceed with the deletion
+    const deletedBlog = await prisma.post.delete({
+      where: { id: Number(id) }, // No need to convert id if it's a string (UUID)
+    });
+
+    // Return success response
+    return c.json({
+      message: 'Post Deleted',
+    });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    c.status(500);
+    return c.json({
+      error: 'Error while deleting the post',
+    });
+  }
+});
+
 
 blogRouter.get('/bulk', async(c) => {
   const prisma=new PrismaClient({

@@ -33,4 +33,8 @@ using hono
     ----------------------------------validation----------------------
     using zod for type shefty
     check user is exist or not is user is exists show mesg
-    
+
+deploye application 
+```npx wrangler login--return oauth string
+    npx wrangler whoami--return account id and account name
+    npm run deploy
